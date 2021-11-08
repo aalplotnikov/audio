@@ -1,0 +1,31 @@
+import org.zenframework.z8.base.table.system.Roles;
+import org.zenframework.z8.base.table.system.Users;
+
+/*
+ * Класс Z8TemplateListener является реализацией RuntimeListener (в BL отсутствуют интерфейсы).
+ * Z8TemplateListener настраивает приложение сразу после генерации схемы БД.
+ */
+public class Z8TemplateListener extends RuntimeListener {
+
+	virtual public void beforeDBGenerate() {}
+
+	virtual public void afterDBGenerate() {
+		// Создать экземпляр объекта установок
+		Setup setup;
+
+		// Запретить роли User доступ к приватным таблицам
+		setup.setTableAccess(setup.privateTables, guid[] { Roles.User }, false, false, false, false, false);
+		// Разрешить роли User доступ к публичным таблицам
+		setup.setTableAccess(setup.publicTables, guid[] { Roles.Administrator, Roles.User }, true, true, true, true, true);
+
+		// Запретить роли User доступ к приватным запросам
+		setup.setRequestAccess(setup.privateRequests, guid[] { Roles.User }, false);
+		// Разрешить роли User доступ к публичным запросам
+		setup.setRequestAccess(setup.publicRequests, guid[] { Roles.User }, true);
+
+		// Добаить пользователю Administrator все пункты меню
+		setup.addEntries(setup.privateEntries, Users.Administrator);
+		setup.addEntries(setup.publicEntries, Users.Administrator);
+	}
+
+}

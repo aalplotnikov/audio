@@ -1,0 +1,113 @@
+buildscript {
+	dependencies {
+		classpath 'gradle.plugin.com.dorongold.plugins:task-tree:1.5'
+	}
+}
+
+apply plugin: 'com.dorongold.task-tree'
+
+buildscript {
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		maven { url 'http://mvn.revoltsoft.ru/' }
+		maven { url 'https://plugins.gradle.org/m2/' }
+	}
+	dependencies {
+		classpath 'org.zenframework.z8:z8-gradle-plugin:1.1.0'
+	}
+}
+
+repositories {
+	mavenLocal()
+	maven { url 'http://mvn.revoltsoft.ru/' }
+}
+
+group = 'org.zenframework.z8'
+version = '1.0'
+
+buildDir = "${projectDir}/target"
+
+apply plugin: 'eclipse'
+apply plugin: 'z8-bl'
+apply plugin: 'z8-app'
+
+dependencies {
+	webcompile "org.zenframework.z8:org.zenframework.z8.js:${z8Version}@zip"
+
+	runtime "org.zenframework.z8:org.zenframework.z8.webserver:${z8Version}"
+	runtime "org.zenframework.z8:org.zenframework.z8.oda.driver:${z8Version}"
+	runtime "org.zenframework.z8.dependencies.jdbc:postgresql-42.0.0:3.0"
+}
+
+// Java config
+
+// Set Java version and sources encoding
+tasks.withType(JavaCompile) {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+	options.encoding = 'UTF-8'
+}
+
+// Web config
+
+// z8-js plugin adds task 'concatCss' that takes CSS-sources from:
+// - src/css, ordered by src/css/.buildorder
+// - resources from ZIP-artifacts of 'webcompile' configuration;
+//   'requiresInclude' points to resources within artifacts
+concatCss {
+	requiresInclude 'web/css/revolt.css'
+}
+
+concatJs {
+	requiresInclude 'web/revolt.js'
+}
+
+// Application config
+
+application {
+	mainClassName = 'org.zenframework.z8.server.engine.ServerMain'
+}
+
+ext.appJavaXmx = '2048M'
+ext.appHost = java.net.InetAddress.getLocalHost().getHostAddress()
+ext.appPort = 9080
+ext.appMaxFormContentSize = 15000000
+
+run {
+	dependsOn assembleWeb
+	jvmArgs = [
+		"-Xmx${appJavaXmx}",
+		"-Xbootclasspath/p:${configurations.boot.singleFile.toPath()}",
+		"-Dorg.eclipse.jetty.server.Request.maxFormContentSize=${appMaxFormContentSize}",
+		"-Dorg.mortbay.http.HttpRequest.maxFormContentSize=${appMaxFormContentSize}",
+		"-Djava.rmi.server.hostname=${appHost}",
+	]
+	args = ['-server', 'webserver']
+	workingDir = "${buildDir}/web/WEB-INF"
+}
+
+// Distribution config
+
+distributions {
+	main {
+		contents {
+			from(buildDir) {
+				include 'bin/**'
+				include 'conf/**'
+				include 'web/**'
+				exclude 'web/debug/**'
+				exclude 'web/debug.html'
+				exclude 'web/WEB-INF/**'
+			}
+			into('work') {
+				from ("${buildDir}/web/WEB-INF") {
+					exclude '*.cache'
+					exclude 'documents/**/*'
+					exclude 'storage/**/*'
+					exclude 'reports/generated/**/*'
+				}
+			}
+		}
+	}
+}
