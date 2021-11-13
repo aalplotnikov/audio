@@ -23,8 +23,6 @@ Eclipse workspace configuration:
 реализовать JavaScript-расширение стандартного компонента Z8.form.field.Text (js/form/field/Text.js) таким образом, чтобы он встраивал в форму проигрыватель аудиофайлов, ссылки на которые хранятся в поле "doc".
 (В Documents.bl использовать атрибут [ui], аналогично тому, как это сделано для поля "email".)
 
-Задание которое выполняю сейчас: 
-
 Задание №1
 В языке BL, помимо StringField (см. org/zenframework/z8/template/view/Document.bl) с ограничением длины значения, предусмотрено поле TextField для хранения текста неограниченной длины.
 В классе Document.bl добавить поле "xml" типа TextField для хранения XML-текста документа, добавить поле "xml" в массив controls в классе Documents.bl.
