@@ -3,7 +3,30 @@ Z8.define('org.zenframework.z8.template.controls.Audio', {
 
 	isFile: true,
 	editor: false,
+	
+	onFocusOut: function(event, target) {
+		var dom = DOM.get(this);
+		target = event.relatedTarget;
 
+		if(dom == target || DOM.isParentOf(dom, target))
+			return false;
+
+		if(this.autoSave && !this.instantAutoSave) {
+			if(this.isValid()) {
+				this.suspendCheckChange--;
+				this.setValue(this.editor.getValue());
+				this.suspendCheckChange++;
+			} else
+				this.initValue(this.originalValue, this.originalDisplayValue);
+		}
+
+		DOM.removeCls(this, 'focus');
+		this.fireEvent('focusOut', this);
+		this.audio.pause();
+		this.getPlayTrigger().setIcon('fa-play');
+		return true;
+	},
+	
 	setValue: function(value, displayValue) {
 		this.callParent(value, displayValue);
 	},
@@ -135,11 +158,13 @@ Z8.define('org.zenframework.z8.template.controls.Audio', {
 
 		dataTransfer.effectAllowed = dataTransfer.dropEffect = 'copy';
 		event.stopEvent();
+		console.log(1);
 	},
 
 	onDragOver: function(event) {
 		if(event.dataTransfer != null && !this.isReadOnly() && this.isEnabled())
 			event.stopEvent();
+		console.log(2);
 	},
 
 	onDrop: function(event) {
